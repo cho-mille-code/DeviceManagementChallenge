@@ -24,7 +24,7 @@ Content-Type: application/json
     "modelId": "MDL-001",
     "modelName": "ThinkPad X1",
     "manufacturer": "Lenovo",
-    "primaryUser": "alice@example.com",
+    "primaryUser": "alice@lego.com",
     "operatingSystem": "Windows 11",
     "deviceType": "Laptop",
     "status": "Active"
@@ -42,7 +42,7 @@ Content-Type: application/json
     "modelId": "MDL-002",
     "modelName": "OptiPlex 7090",
     "manufacturer": "Dell",
-    "primaryUser": "bob@example.com",
+    "primaryUser": "bob@lego.com",
     "operatingSystem": "Windows 10",
     "deviceType": "Desktop",
     "status": "Inactive"
@@ -60,7 +60,7 @@ Content-Type: application/json
     "modelId": "MDL-003",
     "modelName": "MacBook Pro",
     "manufacturer": "Apple",
-    "primaryUser": "carol@example.com",
+    "primaryUser": "carol@lego.com",
     "operatingSystem": "macOS Sequoia",
     "deviceType": "Laptop",
     "status": "Retired"
@@ -99,7 +99,7 @@ Content-Type: application/json
 ```
 ```json
 {
-    "primaryUser": "newowner@example.com",
+    "primaryUser": "newowner@lego.com",
     "status": "Inactive"
 }
 ```
@@ -133,7 +133,7 @@ Content-Type: application/json
 ```
 ```json
 {
-    "primaryUser": "dave@example.com",
+    "primaryUser": "dave@lego.com",
     "operatingSystem": "Ubuntu 24.04",
     "deviceType": "Desktop",
     "status": "Active"
