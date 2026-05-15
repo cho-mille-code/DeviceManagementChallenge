@@ -89,6 +89,26 @@ GET http://localhost:5224/api/devices/00000000-0000-0000-0000-000000000000
 
 ---
 
+### GET /api/devices?primaryUser={email}
+Returns all devices assigned to a specific user. Returns an empty array if the user has no devices. `primaryUser` is required — omitting it returns 400.
+
+**Example — all devices for alice**
+```
+GET http://localhost:5224/api/devices?primaryUser=alice@lego.com
+```
+
+**Example — all devices for bob**
+```
+GET http://localhost:5224/api/devices?primaryUser=bob@lego.com
+```
+
+**Example — missing query param (returns 400)**
+```
+GET http://localhost:5224/api/devices
+```
+
+---
+
 ### PUT /api/devices/{serialNumber}
 Updates one or more of the mutable fields: `primaryUser`, `operatingSystem`, `deviceType`, `status`. All fields are optional — only include the ones you want to change.
 

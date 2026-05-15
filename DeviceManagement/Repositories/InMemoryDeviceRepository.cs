@@ -12,6 +12,9 @@ public class InMemoryDeviceRepository : IDeviceRepository
         return Task.FromResult(device);
     }
 
+    public Task<IEnumerable<Device>> GetByPrimaryUserAsync(string primaryUser)
+        => Task.FromResult(_store.Values.Where(d => d.PrimaryUser == primaryUser));
+
     public Task<Device> CreateAsync(Device device)
     {
         _store[device.SerialNumber] = device;

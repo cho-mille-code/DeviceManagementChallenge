@@ -31,7 +31,45 @@ public class DevicesControllerTests
         Status = Status.Active
     };
 
-    // --- GET ---
+    // --- GET by primary user ---
+
+    [Fact]
+    public async Task GetByPrimaryUser_ReturnsOnlyDevicesForThatUser()
+    {
+        var alice1 = ValidDevice() with { PrimaryUser = "alice@lego.com" };
+        var alice2 = ValidDevice() with { PrimaryUser = "alice@lego.com" };
+        var bob   = ValidDevice() with { PrimaryUser = "bob@lego.com" };
+        await _repository.CreateAsync(alice1);
+        await _repository.CreateAsync(alice2);
+        await _repository.CreateAsync(bob);
+
+        var result = await _controller.GetByPrimaryUser("alice@lego.com");
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var devices = Assert.IsAssignableFrom<IEnumerable<Device>>(ok.Value).ToList();
+        Assert.Equal(2, devices.Count);
+        Assert.All(devices, d => Assert.Equal("alice@lego.com", d.PrimaryUser));
+    }
+
+    [Fact]
+    public async Task GetByPrimaryUser_NoDevices_ReturnsEmptyList()
+    {
+        var result = await _controller.GetByPrimaryUser("nobody@lego.com");
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var devices = Assert.IsAssignableFrom<IEnumerable<Device>>(ok.Value);
+        Assert.Empty(devices);
+    }
+
+    [Fact]
+    public async Task GetByPrimaryUser_MissingParameter_Returns400()
+    {
+        var result = await _controller.GetByPrimaryUser("");
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    // --- GET by serial number ---
 
     [Fact]
     public async Task Get_ExistingDevice_Returns200WithDevice()
@@ -178,6 +216,9 @@ internal class FakeDeviceRepository : IDeviceRepository
         _store.TryGetValue(serialNumber, out var device);
         return Task.FromResult(device);
     }
+
+    public Task<IEnumerable<Device>> GetByPrimaryUserAsync(string primaryUser)
+        => Task.FromResult(_store.Values.Where(d => d.PrimaryUser == primaryUser));
 
     public Task<Device> CreateAsync(Device device)
     {

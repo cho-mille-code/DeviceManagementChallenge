@@ -30,6 +30,16 @@ public class DevicesController : ControllerBase
         return device is null ? NotFound() : Ok(device);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetByPrimaryUser([FromQuery] string? primaryUser)
+    {
+        if (string.IsNullOrWhiteSpace(primaryUser))
+            return BadRequest(new { error = "primaryUser query parameter is required." });
+
+        var devices = await _repository.GetByPrimaryUserAsync(primaryUser);
+        return Ok(devices);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] Device device)
     {

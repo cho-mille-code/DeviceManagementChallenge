@@ -120,6 +120,56 @@ public class ApiIntegrationTests : IClassFixture<DeviceApiFactory>
         Assert.Contains("Active, Inactive, Retired", ErrorMessage(json, "status"));
     }
 
+    // --- GET by primary user ---
+
+    [Fact]
+    public async Task GetByPrimaryUser_ReturnsAllDevicesForThatUser()
+    {
+        var user = $"unique-{Guid.NewGuid()}@lego.com";
+
+        await _client.PostAsync("/api/devices", Json($$"""
+            {
+                "serialNumber": "{{Guid.NewGuid()}}",
+                "modelId": "MDL-001", "modelName": "ThinkPad X1", "manufacturer": "Lenovo",
+                "primaryUser": "{{user}}", "operatingSystem": "Windows 11",
+                "deviceType": "Laptop", "status": "Active"
+            }
+            """));
+        await _client.PostAsync("/api/devices", Json($$"""
+            {
+                "serialNumber": "{{Guid.NewGuid()}}",
+                "modelId": "MDL-002", "modelName": "OptiPlex", "manufacturer": "Dell",
+                "primaryUser": "{{user}}", "operatingSystem": "Windows 10",
+                "deviceType": "Desktop", "status": "Inactive"
+            }
+            """));
+
+        var response = await _client.GetAsync($"/api/devices?primaryUser={Uri.EscapeDataString(user)}");
+        var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(2, json.GetArrayLength());
+        Assert.All(json.EnumerateArray(), d =>
+            Assert.Equal(user, d.GetProperty("primaryUser").GetString()));
+    }
+
+    [Fact]
+    public async Task GetByPrimaryUser_UnknownUser_ReturnsEmptyList()
+    {
+        var response = await _client.GetAsync($"/api/devices?primaryUser=nobody@lego.com");
+        var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(0, json.GetArrayLength());
+    }
+
+    [Fact]
+    public async Task GetByPrimaryUser_MissingQueryParam_Returns400()
+    {
+        var response = await _client.GetAsync("/api/devices");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     // --- Happy path ---
 
     [Fact]
