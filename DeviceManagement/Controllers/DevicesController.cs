@@ -1,0 +1,54 @@
+using DeviceManagement.Models;
+using DeviceManagement.Repositories;
+using DeviceManagement.Validators;
+using Microsoft.AspNetCore.Mvc;
+
+namespace DeviceManagement.Controllers;
+
+[ApiController]
+[Route("api/devices")]
+public class DevicesController : ControllerBase
+{
+    private readonly IDeviceRepository _repository;
+    private readonly DeviceValidator _validator;
+    private readonly UpdateDeviceRequestValidator _updateValidator;
+
+    public DevicesController(
+        IDeviceRepository repository,
+        DeviceValidator validator,
+        UpdateDeviceRequestValidator updateValidator)
+    {
+        _repository = repository;
+        _validator = validator;
+        _updateValidator = updateValidator;
+    }
+
+    [HttpGet("{serialNumber:guid}")]
+    public async Task<IActionResult> Get(Guid serialNumber)
+    {
+        var device = await _repository.GetBySerialNumberAsync(serialNumber);
+        return device is null ? NotFound() : Ok(device);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] Device device)
+    {
+        var validation = await _validator.ValidateAsync(device);
+        if (!validation.IsValid)
+            return BadRequest(validation.Errors);
+
+        var created = await _repository.CreateAsync(device);
+        return CreatedAtAction(nameof(Get), new { serialNumber = created.SerialNumber }, created);
+    }
+
+    [HttpPut("{serialNumber:guid}")]
+    public async Task<IActionResult> Update(Guid serialNumber, [FromBody] UpdateDeviceRequest request)
+    {
+        var validation = await _updateValidator.ValidateAsync(request);
+        if (!validation.IsValid)
+            return BadRequest(validation.Errors);
+
+        var updated = await _repository.UpdateAsync(serialNumber, request);
+        return updated is null ? NotFound() : Ok(updated);
+    }
+}
