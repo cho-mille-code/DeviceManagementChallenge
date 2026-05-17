@@ -3,10 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DeviceManagement.Data;
 
-public class DeviceDbContext : DbContext
+public class DeviceDbContext(DbContextOptions<DeviceDbContext> options) : DbContext(options)
 {
-    public DeviceDbContext(DbContextOptions<DeviceDbContext> options) : base(options) { }
-
     public DbSet<Device> Devices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
