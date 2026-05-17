@@ -1,6 +1,5 @@
 using DeviceManagement.Controllers;
 using DeviceManagement.Models;
-using DeviceManagement.Repositories;
 using DeviceManagement.Validators;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,7 +7,7 @@ namespace DeviceManagement.Tests;
 
 public class DevicesControllerTests
 {
-    private readonly FakeDeviceRepository _repository = new();
+    private readonly InMemoryDeviceRepository _repository = new();
     private readonly DevicesController _controller;
 
     public DevicesControllerTests()
@@ -38,7 +37,7 @@ public class DevicesControllerTests
     {
         var alice1 = ValidDevice() with { PrimaryUser = "alice@lego.com" };
         var alice2 = ValidDevice() with { PrimaryUser = "alice@lego.com" };
-        var bob   = ValidDevice() with { PrimaryUser = "bob@lego.com" };
+        var bob    = ValidDevice() with { PrimaryUser = "bob@lego.com" };
         await _repository.CreateAsync(alice1);
         await _repository.CreateAsync(alice2);
         await _repository.CreateAsync(bob);
@@ -204,42 +203,5 @@ public class DevicesControllerTests
         var result = await _controller.Update(device.SerialNumber, update);
 
         Assert.IsType<BadRequestObjectResult>(result);
-    }
-}
-
-internal class FakeDeviceRepository : IDeviceRepository
-{
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, Device> _store = new();
-
-    public Task<Device?> GetBySerialNumberAsync(Guid serialNumber)
-    {
-        _store.TryGetValue(serialNumber, out var device);
-        return Task.FromResult(device);
-    }
-
-    public Task<IReadOnlyList<Device>> GetByPrimaryUserAsync(string primaryUser)
-        => Task.FromResult<IReadOnlyList<Device>>(_store.Values.Where(d => d.PrimaryUser == primaryUser).ToList());
-
-    public Task<Device> CreateAsync(Device device)
-    {
-        _store[device.SerialNumber] = device;
-        return Task.FromResult(device);
-    }
-
-    public Task<Device?> UpdateAsync(Guid serialNumber, UpdateDeviceRequest request)
-    {
-        if (!_store.TryGetValue(serialNumber, out var existing))
-            return Task.FromResult<Device?>(null);
-
-        var updated = existing with
-        {
-            PrimaryUser = request.PrimaryUser ?? existing.PrimaryUser,
-            OperatingSystem = request.OperatingSystem ?? existing.OperatingSystem,
-            DeviceType = request.DeviceType ?? existing.DeviceType,
-            Status = request.Status ?? existing.Status
-        };
-
-        _store[serialNumber] = updated;
-        return Task.FromResult<Device?>(updated);
     }
 }

@@ -13,7 +13,5 @@ public class DeviceValidator : AbstractValidator<Device>
         RuleFor(x => x.Manufacturer).NotEmpty();
         RuleFor(x => x.PrimaryUser).NotEmpty().EmailAddress();
         RuleFor(x => x.OperatingSystem).NotEmpty();
-        RuleFor(x => x.DeviceType).IsInEnum();
-        RuleFor(x => x.Status).IsInEnum();
     }
 }

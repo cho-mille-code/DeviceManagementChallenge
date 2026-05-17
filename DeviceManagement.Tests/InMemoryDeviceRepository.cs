@@ -1,9 +1,10 @@
 using System.Collections.Concurrent;
 using DeviceManagement.Models;
+using DeviceManagement.Repositories;
 
-namespace DeviceManagement.Repositories;
+namespace DeviceManagement.Tests;
 
-public class InMemoryDeviceRepository : IDeviceRepository
+internal class InMemoryDeviceRepository : IDeviceRepository
 {
     private readonly ConcurrentDictionary<Guid, Device> _store = new();
 
