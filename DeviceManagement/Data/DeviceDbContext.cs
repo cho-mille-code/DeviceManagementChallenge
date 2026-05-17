@@ -22,6 +22,7 @@ public class DeviceDbContext : DbContext
             entity.Property(d => d.OperatingSystem).IsUnicode(false);
             entity.Property(d => d.DeviceType).HasConversion<string>().IsUnicode(false);
             entity.Property(d => d.Status).HasConversion<string>().IsUnicode(false);
+            entity.HasIndex(d => d.PrimaryUser);
         });
     }
 }

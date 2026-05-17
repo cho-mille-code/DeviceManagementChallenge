@@ -4,7 +4,7 @@ using FluentValidation.TestHelper;
 
 namespace DeviceManagement.Tests;
 
-public class DeviceTest
+public class DeviceTests
 {
     private readonly DeviceValidator _validator = new();
 
@@ -41,6 +41,36 @@ public class DeviceTest
     {
         var request = ValidRequest() with { SerialNumber = Guid.NewGuid() };
         _validator.TestValidate(request).ShouldNotHaveValidationErrorFor(x => x.SerialNumber);
+    }
+
+    // --- ModelId / ModelName / Manufacturer / OperatingSystem ---
+
+    [Fact]
+    public void ModelId_Empty_FailsValidation()
+    {
+        _validator.TestValidate(ValidRequest() with { ModelId = "" })
+            .ShouldHaveValidationErrorFor(x => x.ModelId);
+    }
+
+    [Fact]
+    public void ModelName_Empty_FailsValidation()
+    {
+        _validator.TestValidate(ValidRequest() with { ModelName = "" })
+            .ShouldHaveValidationErrorFor(x => x.ModelName);
+    }
+
+    [Fact]
+    public void Manufacturer_Empty_FailsValidation()
+    {
+        _validator.TestValidate(ValidRequest() with { Manufacturer = "" })
+            .ShouldHaveValidationErrorFor(x => x.Manufacturer);
+    }
+
+    [Fact]
+    public void OperatingSystem_Empty_FailsValidation()
+    {
+        _validator.TestValidate(ValidRequest() with { OperatingSystem = "" })
+            .ShouldHaveValidationErrorFor(x => x.OperatingSystem);
     }
 
     // --- PrimaryUser ---

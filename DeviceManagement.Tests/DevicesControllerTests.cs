@@ -209,7 +209,7 @@ public class DevicesControllerTests
 
 internal class FakeDeviceRepository : IDeviceRepository
 {
-    private readonly Dictionary<Guid, Device> _store = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, Device> _store = new();
 
     public Task<Device?> GetBySerialNumberAsync(Guid serialNumber)
     {
@@ -217,8 +217,8 @@ internal class FakeDeviceRepository : IDeviceRepository
         return Task.FromResult(device);
     }
 
-    public Task<IEnumerable<Device>> GetByPrimaryUserAsync(string primaryUser)
-        => Task.FromResult(_store.Values.Where(d => d.PrimaryUser == primaryUser));
+    public Task<IReadOnlyList<Device>> GetByPrimaryUserAsync(string primaryUser)
+        => Task.FromResult<IReadOnlyList<Device>>(_store.Values.Where(d => d.PrimaryUser == primaryUser).ToList());
 
     public Task<Device> CreateAsync(Device device)
     {

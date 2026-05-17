@@ -1,10 +1,11 @@
+using System.Collections.Concurrent;
 using DeviceManagement.Models;
 
 namespace DeviceManagement.Repositories;
 
 public class InMemoryDeviceRepository : IDeviceRepository
 {
-    private readonly Dictionary<Guid, Device> _store = new();
+    private readonly ConcurrentDictionary<Guid, Device> _store = new();
 
     public Task<Device?> GetBySerialNumberAsync(Guid serialNumber)
     {
@@ -12,8 +13,8 @@ public class InMemoryDeviceRepository : IDeviceRepository
         return Task.FromResult(device);
     }
 
-    public Task<IEnumerable<Device>> GetByPrimaryUserAsync(string primaryUser)
-        => Task.FromResult(_store.Values.Where(d => d.PrimaryUser == primaryUser));
+    public Task<IReadOnlyList<Device>> GetByPrimaryUserAsync(string primaryUser)
+        => Task.FromResult<IReadOnlyList<Device>>(_store.Values.Where(d => d.PrimaryUser == primaryUser).ToList());
 
     public Task<Device> CreateAsync(Device device)
     {

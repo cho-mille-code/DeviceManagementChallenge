@@ -16,7 +16,7 @@ public class SqlDeviceRepository : IDeviceRepository
     public async Task<Device?> GetBySerialNumberAsync(Guid serialNumber)
         => await _context.Devices.FindAsync(serialNumber);
 
-    public async Task<IEnumerable<Device>> GetByPrimaryUserAsync(string primaryUser)
+    public async Task<IReadOnlyList<Device>> GetByPrimaryUserAsync(string primaryUser)
         => await _context.Devices
             .Where(d => d.PrimaryUser == primaryUser)
             .ToListAsync();

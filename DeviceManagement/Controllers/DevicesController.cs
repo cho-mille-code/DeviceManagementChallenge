@@ -1,6 +1,6 @@
 using DeviceManagement.Models;
 using DeviceManagement.Repositories;
-using DeviceManagement.Validators;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DeviceManagement.Controllers;
@@ -10,13 +10,13 @@ namespace DeviceManagement.Controllers;
 public class DevicesController : ControllerBase
 {
     private readonly IDeviceRepository _repository;
-    private readonly DeviceValidator _validator;
-    private readonly UpdateDeviceRequestValidator _updateValidator;
+    private readonly IValidator<Device> _validator;
+    private readonly IValidator<UpdateDeviceRequest> _updateValidator;
 
     public DevicesController(
         IDeviceRepository repository,
-        DeviceValidator validator,
-        UpdateDeviceRequestValidator updateValidator)
+        IValidator<Device> validator,
+        IValidator<UpdateDeviceRequest> updateValidator)
     {
         _repository = repository;
         _validator = validator;

@@ -1,10 +1,25 @@
+using Azure.Identity;
 using DeviceManagement.Data;
+using DeviceManagement.Models;
 using DeviceManagement.Repositories;
 using DeviceManagement.Validators;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// In production, secrets (e.g. the connection string) are stored in Azure Key Vault.
+// The vault name is the only non-secret config needed — safe to put in an env variable.
+// DefaultAzureCredential picks up the app's Managed Identity automatically; no credentials in code.
+if (!builder.Environment.IsDevelopment())
+{
+    var kvName = builder.Configuration["Azure:KeyVaultName"];
+    if (!string.IsNullOrEmpty(kvName))
+        builder.Configuration.AddAzureKeyVault(
+            new Uri($"https://{kvName}.vault.azure.net/"),
+            new DefaultAzureCredential());
+}
 
 builder.Services.AddOpenApi();
 builder.Services.AddControllers()
@@ -44,8 +59,8 @@ builder.Services.AddDbContext<DeviceDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IDeviceRepository, SqlDeviceRepository>();
-builder.Services.AddSingleton<DeviceValidator>();
-builder.Services.AddSingleton<UpdateDeviceRequestValidator>();
+builder.Services.AddSingleton<IValidator<Device>, DeviceValidator>();
+builder.Services.AddSingleton<IValidator<UpdateDeviceRequest>, UpdateDeviceRequestValidator>();
 
 var app = builder.Build();
 
