@@ -1,6 +1,6 @@
 using DeviceManagement.Controllers;
 using DeviceManagement.Models;
-using DeviceManagement.Validators;
+using DeviceManagement.Validations;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DeviceManagement.Tests;

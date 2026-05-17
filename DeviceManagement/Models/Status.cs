@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using DeviceManagement.Infrastructure;
+using DeviceManagement.Validations;
 
 namespace DeviceManagement.Models;
 

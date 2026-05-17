@@ -1,4 +1,4 @@
-using DeviceManagement.Repositories;
+using DeviceManagement.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;

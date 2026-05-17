@@ -1,7 +1,7 @@
 using DeviceManagement.Models;
 using FluentValidation;
 
-namespace DeviceManagement.Helpers;
+namespace DeviceManagement.Validations;
 
 public class UpdateDeviceRequestValidator : AbstractValidator<UpdateDeviceRequest>
 {

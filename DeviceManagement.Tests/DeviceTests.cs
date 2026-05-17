@@ -1,4 +1,4 @@
-using DeviceManagement.Helpers;
+using DeviceManagement.Validations;
 using DeviceManagement.Models;
 using FluentValidation.TestHelper;
 

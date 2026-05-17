@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using DeviceManagement.Models;
-using DeviceManagement.Repositories;
+using DeviceManagement.Persistence;
 
 namespace DeviceManagement.Tests;
 

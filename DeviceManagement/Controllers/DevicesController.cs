@@ -1,5 +1,5 @@
 using DeviceManagement.Models;
-using DeviceManagement.Repositories;
+using DeviceManagement.Persistence;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 

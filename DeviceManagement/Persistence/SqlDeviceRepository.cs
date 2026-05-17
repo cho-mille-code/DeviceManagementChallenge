@@ -1,8 +1,7 @@
-using DeviceManagement.Data;
 using DeviceManagement.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace DeviceManagement.Repositories;
+namespace DeviceManagement.Persistence;
 
 public class SqlDeviceRepository(DeviceDbContext context) : IDeviceRepository
 {

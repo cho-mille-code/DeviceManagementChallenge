@@ -1,7 +1,7 @@
 using DeviceManagement.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace DeviceManagement.Data;
+namespace DeviceManagement.Persistence;
 
 public class DeviceDbContext(DbContextOptions<DeviceDbContext> options) : DbContext(options)
 {

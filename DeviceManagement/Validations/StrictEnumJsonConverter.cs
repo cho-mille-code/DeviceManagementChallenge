@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DeviceManagement.Helpers;
+namespace DeviceManagement.Validations;
 
 public class StrictEnumJsonConverter<TEnum> : JsonConverter<TEnum> where TEnum : struct, Enum
 {

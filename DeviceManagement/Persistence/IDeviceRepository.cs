@@ -1,6 +1,6 @@
 using DeviceManagement.Models;
 
-namespace DeviceManagement.Repositories;
+namespace DeviceManagement.Persistence;
 
 public interface IDeviceRepository
 {
