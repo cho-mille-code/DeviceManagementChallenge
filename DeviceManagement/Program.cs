@@ -1,11 +1,12 @@
 using Azure.Identity;
 using DeviceManagement.Data;
+using DeviceManagement.Helpers;
 using DeviceManagement.Models;
 using DeviceManagement.Repositories;
-using DeviceManagement.Validators;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -65,7 +66,10 @@ builder.Services.AddSingleton<IValidator<UpdateDeviceRequest>, UpdateDeviceReque
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
+{
     app.MapOpenApi();
+    app.MapScalarApiReference();
+}
 
 app.UseHttpsRedirection();
 app.MapControllers();
