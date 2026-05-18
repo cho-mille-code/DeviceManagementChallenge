@@ -1,19 +1,51 @@
-# DeviceManagementChallenge
+# Device Management API
 
-A .NET 10 Web API for managing device inventory backed by a MSSQL database.
+A .NET 10 / C# 12 Web API for managing device inventory, backed by SQL Server via EF Core.
 
-**Base URL:** `http://localhost:5224`
+**Local base URL:** `http://localhost:5224`  
+**Interactive docs:** `http://localhost:5224/scalar/v1` (development only)
+
+---
+
+## Project structure
+
+```
+DeviceManagement/
+  Controllers/   # HTTP routing and response shaping
+  Models/        # Domain types: Device, UpdateDeviceRequest, DeviceType, Status
+  Persistence/   # IDeviceRepository, SqlDeviceRepository, DeviceDbContext
+  Validations/   # DeviceValidator, UpdateDeviceRequestValidator, StrictEnumJsonConverter
+
+DeviceManagement.Tests/
+  DeviceTests.cs              # Validator unit tests (7)
+  DevicesControllerTests.cs   # Controller unit tests (13)
+  ApiIntegrationTests.cs      # Full-pipeline integration tests (11)
+  InMemoryDeviceRepository.cs # Test double — no database required
+  DeviceApiFactory.cs         # WebApplicationFactory wiring
+```
+
+---
+
+## Design decisions
+
+- **Records + `required` + `init`** — `Device` is immutable after construction. Missing a field is a compile error and a JSON 400, not a runtime null.
+- **`UpdateDeviceRequest`** — separate type containing only the 4 mutable fields. The type system enforces immutability; no runtime guard needed.
+- **Two-layer validation** — `StrictEnumJsonConverter` rejects invalid enum values at deserialization with a clear message. `DeviceValidator` enforces business rules (non-empty fields, email format) via FluentValidation.
+- **`IDeviceRepository`** — the interface is the seam between domain and persistence. Swapping SQL for any other backend is a single change in `Program.cs`.
+- **`IReadOnlyList<T>`** — query results are materialised snapshots, not lazy cursors.
+- **`AsNoTracking()` + `with`** — updates load the existing record untracked, produce a new record via `with`, then attach it explicitly. Required because `init` properties cannot be mutated in place.
+- **Enums stored as strings** — `HasConversion<string>()` keeps the database human-readable without the source code.
+- **`IsUnicode(false)`** — all string columns are `varchar`; device identifiers and email addresses are ASCII.
+- **Index on `PrimaryUser`** — the `GET ?primaryUser=` query path has a covering index.
 
 ---
 
 ## Endpoints
 
 ### POST /api/devices
-Creates a new device. All fields are required. `serialNumber` must be a valid GUID, `primaryUser` must be a valid email address, `deviceType` must be `Laptop` or `Desktop`, and `status` must be `Active`, `Inactive`, or `Retired`.
 
-Once created, `serialNumber`, `modelId`, `modelName`, and `manufacturer` are immutable and cannot be changed.
+Creates a new device. All 8 fields are required.
 
-**Example — Laptop, Active**
 ```
 POST http://localhost:5224/api/devices
 Content-Type: application/json
@@ -31,132 +63,42 @@ Content-Type: application/json
 }
 ```
 
-**Example — Desktop, Inactive**
-```
-POST http://localhost:5224/api/devices
-Content-Type: application/json
-```
-```json
-{
-    "serialNumber": "9b2e4c1d-8a3f-4e7b-b6d2-1f5a0c3e8d92",
-    "modelId": "MDL-002",
-    "modelName": "OptiPlex 7090",
-    "manufacturer": "Dell",
-    "primaryUser": "bob@lego.com",
-    "operatingSystem": "Windows 10",
-    "deviceType": "Desktop",
-    "status": "Inactive"
-}
-```
-
-**Example — Laptop, Retired**
-```
-POST http://localhost:5224/api/devices
-Content-Type: application/json
-```
-```json
-{
-    "serialNumber": "c7f3a2b1-4d6e-4a8c-9e1f-2b3d5f7a9c0e",
-    "modelId": "MDL-003",
-    "modelName": "MacBook Pro",
-    "manufacturer": "Apple",
-    "primaryUser": "carol@lego.com",
-    "operatingSystem": "macOS Sequoia",
-    "deviceType": "Laptop",
-    "status": "Retired"
-}
-```
+Returns `201 Created` with the device and a `Location` header pointing to its GET URL.
 
 ---
 
 ### GET /api/devices/{serialNumber}
-Returns a single device by its serial number.
 
-**Example — fetch the ThinkPad created above**
+Returns a single device by GUID. Returns `404` if not found.
+
 ```
 GET http://localhost:5224/api/devices/3fa85f64-5717-4562-b3fc-2c963f66afa6
-```
-
-**Example — fetch the OptiPlex**
-```
-GET http://localhost:5224/api/devices/9b2e4c1d-8a3f-4e7b-b6d2-1f5a0c3e8d92
-```
-
-**Example — unknown device (returns 404)**
-```
-GET http://localhost:5224/api/devices/00000000-0000-0000-0000-000000000000
 ```
 
 ---
 
 ### GET /api/devices?primaryUser={email}
-Returns all devices assigned to a specific user. Returns an empty array if the user has no devices. `primaryUser` is required — omitting it returns 400.
 
-**Example — all devices for alice**
-```
-GET http://localhost:5224/api/devices?primaryUser=alice@lego.com
-```
+Returns all devices assigned to a user. Returns an empty array if none. `primaryUser` is required — omitting it returns `400`.
 
-**Example — all devices for bob**
 ```
-GET http://localhost:5224/api/devices?primaryUser=bob@lego.com
-```
-
-**Example — missing query param (returns 400)**
-```
-GET http://localhost:5224/api/devices
+GET http://localhost:5224/api/devices?primaryUser=alice@spartan.dk
 ```
 
 ---
 
 ### PUT /api/devices/{serialNumber}
-Updates one or more of the mutable fields: `primaryUser`, `operatingSystem`, `deviceType`, `status`. All fields are optional — only include the ones you want to change.
 
-**Example — update primary user and status**
+Updates one or more mutable fields: `primaryUser`, `operatingSystem`, `deviceType`, `status`. All fields are optional — only send the ones to change. Returns `404` if the serial number does not exist.
+
 ```
 PUT http://localhost:5224/api/devices/3fa85f64-5717-4562-b3fc-2c963f66afa6
 Content-Type: application/json
 ```
 ```json
 {
-    "primaryUser": "newowner@lego.com",
+    "primaryUser": "bob@spartan.dk",
     "status": "Inactive"
-}
-```
-
-**Example — change OS only**
-```
-PUT http://localhost:5224/api/devices/3fa85f64-5717-4562-b3fc-2c963f66afa6
-Content-Type: application/json
-```
-```json
-{
-    "operatingSystem": "Windows 11 Pro"
-}
-```
-
-**Example — retire a device**
-```
-PUT http://localhost:5224/api/devices/9b2e4c1d-8a3f-4e7b-b6d2-1f5a0c3e8d92
-Content-Type: application/json
-```
-```json
-{
-    "status": "Retired"
-}
-```
-
-**Example — full update of all mutable fields**
-```
-PUT http://localhost:5224/api/devices/9b2e4c1d-8a3f-4e7b-b6d2-1f5a0c3e8d92
-Content-Type: application/json
-```
-```json
-{
-    "primaryUser": "dave@lego.com",
-    "operatingSystem": "Ubuntu 24.04",
-    "deviceType": "Desktop",
-    "status": "Active"
 }
 ```
 
@@ -166,16 +108,60 @@ Content-Type: application/json
 
 | Field | Rule |
 |---|---|
-| `serialNumber` | Valid GUID, must not be all zeros |
+| `serialNumber` | Valid non-empty GUID |
+| `modelId` | Non-empty string |
+| `modelName` | Non-empty string |
+| `manufacturer` | Non-empty string |
 | `primaryUser` | Valid email address |
-| `deviceType` | `Laptop` or `Desktop` |
-| `status` | `Active`, `Inactive`, or `Retired` |
+| `operatingSystem` | Non-empty string |
+| `deviceType` | `Laptop` or `Desktop` (case-sensitive) |
+| `status` | `Active`, `Inactive`, or `Retired` (case-sensitive) |
 
-## Running the database
+Invalid enum values return a 400 with the accepted values listed:
+```json
+{
+  "status": 400,
+  "errors": {
+    "deviceType": ["'Tablet' is not a valid DeviceType. Accepted values are: Laptop, Desktop."]
+  }
+}
+```
 
-The API uses MSSQL via LocalDB. To set up from scratch:
+---
 
+## Running locally
+
+**Database setup (first time):**
 ```bash
 dotnet ef migrations add InitialCreate --project DeviceManagement
 dotnet ef database update --project DeviceManagement
 ```
+
+**Run the API:**
+```bash
+dotnet run --project DeviceManagement
+```
+
+**Run all tests (no database required):**
+```bash
+dotnet test
+```
+
+---
+
+## Docker
+
+```bash
+docker build -t device-management .
+docker run -p 8080:8080 -e ConnectionStrings__DefaultConnection="..." device-management
+```
+
+---
+
+## Azure
+
+The application targets Azure Container Apps. In non-development environments it reads the connection string from Azure Key Vault using `DefaultAzureCredential` (Managed Identity — no credentials in code or config).
+
+Infrastructure is defined in `infra/main.bicep`: Container Registry, Azure SQL, Key Vault, Managed Identity, and Container Apps with HTTP-based autoscaling (1–5 replicas).
+
+CI/CD runs via GitHub Actions (`.github/workflows/ci.yml`): builds and tests on every push and PR; builds and pushes a Docker image to ACR on merges to `main`.
