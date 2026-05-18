@@ -26,20 +26,6 @@ DeviceManagement.Tests/
 
 ---
 
-## Design decisions
-
-- **Records + `required` + `init`** — `Device` is immutable after construction. Missing a field is a compile error and a JSON 400, not a runtime null.
-- **`UpdateDeviceRequest`** — separate type containing only the 4 mutable fields. The type system enforces immutability; no runtime guard needed.
-- **Two-layer validation** — `StrictEnumJsonConverter` rejects invalid enum values at deserialization with a clear message. `DeviceValidator` enforces business rules (non-empty fields, email format) via FluentValidation.
-- **`IDeviceRepository`** — the interface is the seam between domain and persistence. Swapping SQL for any other backend is a single change in `Program.cs`.
-- **`IReadOnlyList<T>`** — query results are materialised snapshots, not lazy cursors.
-- **`AsNoTracking()` + `with`** — updates load the existing record untracked, produce a new record via `with`, then attach it explicitly. Required because `init` properties cannot be mutated in place.
-- **Enums stored as strings** — `HasConversion<string>()` keeps the database human-readable without the source code.
-- **`IsUnicode(false)`** — all string columns are `varchar`; device identifiers and email addresses are ASCII.
-- **Index on `PrimaryUser`** — the `GET ?primaryUser=` query path has a covering index.
-
----
-
 ## Endpoints
 
 ### POST /api/devices
@@ -63,7 +49,7 @@ Content-Type: application/json
 }
 ```
 
-Returns `201 Created` with the device and a `Location` header pointing to its GET URL.
+Returns `201 Created` with the device.
 
 ---
 
@@ -147,21 +133,3 @@ dotnet run --project DeviceManagement
 dotnet test
 ```
 
----
-
-## Docker
-
-```bash
-docker build -t device-management .
-docker run -p 8080:8080 -e ConnectionStrings__DefaultConnection="..." device-management
-```
-
----
-
-## Azure
-
-The application targets Azure Container Apps. In non-development environments it reads the connection string from Azure Key Vault using `DefaultAzureCredential` (Managed Identity — no credentials in code or config).
-
-Infrastructure is defined in `infra/main.bicep`: Container Registry, Azure SQL, Key Vault, Managed Identity, and Container Apps with HTTP-based autoscaling (1–5 replicas).
-
-CI/CD runs via GitHub Actions (`.github/workflows/ci.yml`): builds and tests on every push and PR; builds and pushes a Docker image to ACR on merges to `main`.
